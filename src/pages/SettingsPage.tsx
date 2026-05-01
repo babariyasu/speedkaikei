@@ -2,15 +2,29 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
+import { useSettings } from '@/context/SettingsContext'
 
 export default function SettingsPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { taxRate, saveTaxRate } = useSettings()
+
+  const [taxRateInput, setTaxRateInput] = useState(String(taxRate))
+  const [taxSaved, setTaxSaved] = useState(false)
+
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  function handleSaveTaxRate() {
+    const rate = Number(taxRateInput)
+    if (isNaN(rate) || rate < 0 || rate > 100) return
+    saveTaxRate(rate)
+    setTaxSaved(true)
+    setTimeout(() => setTaxSaved(false), 2000)
+  }
 
   async function handlePasswordChange(e: React.FormEvent) {
     e.preventDefault()
@@ -53,14 +67,49 @@ export default function SettingsPage() {
       <div className="p-4 space-y-4">
         {/* アカウント情報 */}
         <div className="bg-white rounded-xl border p-4">
-          <h2 className="font-semibold mb-3 text-sm text-gray-500">アカウント情報</h2>
+          <h2 className="text-sm font-semibold text-gray-500 mb-2">アカウント情報</h2>
           <p className="text-xs text-gray-400 mb-0.5">メールアドレス</p>
           <p className="font-medium">{user?.email}</p>
         </div>
 
+        {/* 税率設定 */}
+        <div className="bg-white rounded-xl border p-4">
+          <h2 className="text-sm font-semibold text-gray-500 mb-3">税率設定</h2>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              value={taxRateInput}
+              onChange={e => setTaxRateInput(e.target.value)}
+              min="0"
+              max="100"
+              className="w-20 border-2 border-gray-200 rounded-xl px-3 py-2 text-center text-2xl font-bold focus:outline-none focus:border-blue-400"
+            />
+            <span className="text-2xl font-medium text-gray-500">%</span>
+            <button
+              onClick={handleSaveTaxRate}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
+            >
+              保存
+            </button>
+            {taxSaved && (
+              <span className="text-green-600 text-sm font-medium">✓ 保存しました</span>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+            商品に設定した税込み価格から税抜き価格を自動計算します。<br />
+            0% にすると税額の表示がなくなります。
+          </p>
+          {/* 現在の税率での計算例 */}
+          {taxRate > 0 && (
+            <div className="mt-3 bg-blue-50 rounded-lg p-3 text-sm text-blue-700">
+              例）¥{(1000).toLocaleString()}（税込）→ 税抜 ¥{Math.round(1000 / (1 + taxRate / 100)).toLocaleString()}、消費税 ¥{Math.round(1000 * taxRate / (100 + taxRate)).toLocaleString()}
+            </div>
+          )}
+        </div>
+
         {/* パスワード変更 */}
         <div className="bg-white rounded-xl border p-4">
-          <h2 className="font-semibold mb-3 text-sm text-gray-500">パスワード変更</h2>
+          <h2 className="text-sm font-semibold text-gray-500 mb-3">パスワード変更</h2>
           <form onSubmit={handlePasswordChange} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">新しいパスワード</label>

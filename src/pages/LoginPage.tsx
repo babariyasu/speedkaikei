@@ -10,9 +10,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // すでにログイン済みの場合はメニューへ遷移
+    // すでにログイン済みの場合は販売画面へ
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate('/menu', { replace: true })
+      if (session) navigate('/sales', { replace: true })
     })
   }, [navigate])
 
@@ -29,7 +29,7 @@ export default function LoginPage() {
       return
     }
 
-    navigate('/menu', { replace: true })
+    navigate('/sales', { replace: true })
   }
 
   return (

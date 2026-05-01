@@ -1,13 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
 
-// ナビゲーション項目の定義
 const navItems = [
   {
-    href: '/accounting',
-    label: '会計',
+    href: '/sales',
+    label: '販売',
     icon: (active: boolean) => (
       <svg className={`h-6 w-6 ${active ? 'text-blue-600' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
     ),
   },
@@ -43,6 +42,9 @@ const navItems = [
 
 export default function Navigation() {
   const { pathname } = useLocation()
+
+  // 会計画面ではナビゲーションバーを非表示にする
+  if (pathname === '/checkout') return null
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">

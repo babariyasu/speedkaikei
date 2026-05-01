@@ -4,7 +4,7 @@ export type Product = {
   id: string
   user_id: string
   name: string
-  price: number
+  price: number      // 税込み価格
   category: string
   image_url: string | null
   stock: number
@@ -14,9 +14,12 @@ export type Product = {
 export type AccountingRecord = {
   id: string
   user_id: string
-  total_amount: number
+  total_amount: number     // 税込み合計
+  received_amount: number  // お預かり金額
+  change_amount: number    // お釣り
+  tax_rate: number         // 会計時の税率（%）
+  tax_amount: number       // 消費税額（内税）
   created_at: string
-  // JOINで取得する明細データ
   accounting_record_items?: AccountingRecordItem[]
 }
 
@@ -30,7 +33,7 @@ export type AccountingRecordItem = {
   subtotal: number
 }
 
-// 会計画面のカート内アイテム
+// 販売画面のカートアイテム
 export type CartItem = {
   product: Product
   quantity: number

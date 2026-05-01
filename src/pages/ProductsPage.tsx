@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useSettings } from '@/context/SettingsContext'
 import type { Product } from '@/types/database'
 
 export default function ProductsPage() {
@@ -9,6 +10,7 @@ export default function ProductsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { taxRate } = useSettings()
 
   const [form, setForm] = useState({
     name: '',
@@ -30,7 +32,8 @@ export default function ProductsPage() {
     const { data } = await supabase
       .from('products')
       .select('*')
-      .order('created_at', { ascending: false })
+      .order('category')
+      .order('name')
 
     if (data) {
       setProducts(data)
@@ -90,7 +93,6 @@ export default function ProductsPage() {
         imageUrl = publicUrl
       }
 
-      // 商品レコードを登録
       const { error: insertError } = await supabase.from('products').insert({
         user_id: user.id,
         name: form.name.trim(),
@@ -115,6 +117,11 @@ export default function ProductsPage() {
     if (!confirm('この商品を削除しますか？')) return
     await supabase.from('products').delete().eq('id', id)
     fetchProducts()
+  }
+
+  // 税抜き価格を逆算
+  function exTaxPrice(priceInc: number): number {
+    return Math.round(priceInc / (1 + taxRate / 100))
   }
 
   return (
@@ -147,21 +154,32 @@ export default function ProductsPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">金額 *</label>
-              <input
-                type="number"
-                value={form.price}
-                onChange={e => setForm({ ...form, price: e.target.value })}
-                required
-                min="0"
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0"
-              />
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                価格（税込み） *
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={e => setForm({ ...form, price: e.target.value })}
+                  required
+                  min="0"
+                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0"
+                />
+                <span className="text-sm text-gray-500">円（税込）</span>
+              </div>
+              {/* 入力中の税抜き価格プレビュー */}
+              {taxRate > 0 && form.price && (
+                <p className="text-xs text-gray-400 mt-1">
+                  税抜 ¥{exTaxPrice(Number(form.price)).toLocaleString()} ／ 消費税 ¥{(Number(form.price) - exTaxPrice(Number(form.price))).toLocaleString()}
+                </p>
+              )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">分類 *</label>
-              {/* 過去に登録した分類はプルダウンで選択できる */}
+              {/* 過去に登録した分類はプルダウンで選択可能 */}
               {categories.length > 0 && (
                 <select
                   value={form.selectedCategory}
@@ -206,11 +224,7 @@ export default function ProductsPage() {
                 className="w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
               {imagePreview && (
-                <img
-                  src={imagePreview}
-                  alt="プレビュー"
-                  className="mt-2 h-28 w-28 object-cover rounded-lg"
-                />
+                <img src={imagePreview} alt="プレビュー" className="mt-2 h-28 w-28 object-cover rounded-lg" />
               )}
             </div>
 
@@ -238,20 +252,22 @@ export default function ProductsPage() {
             {products.map(product => (
               <div key={product.id} className="bg-white rounded-xl border p-3 flex gap-3">
                 {product.image_url ? (
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                  />
+                  <img src={product.image_url} alt={product.name} className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
                 ) : (
-                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-2xl">
-                    📦
-                  </div>
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center text-2xl">📦</div>
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{product.name}</p>
                   <p className="text-xs text-gray-400">{product.category}</p>
-                  <p className="text-blue-600 font-bold text-sm">¥{product.price.toLocaleString()}</p>
+                  <p className="text-blue-600 font-bold text-sm">
+                    ¥{product.price.toLocaleString()}
+                    <span className="text-gray-400 font-normal text-xs ml-0.5">税込</span>
+                  </p>
+                  {taxRate > 0 && (
+                    <p className="text-xs text-gray-400">
+                      税抜 ¥{exTaxPrice(product.price).toLocaleString()}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500">在庫: {product.stock}</p>
                 </div>
                 <button
