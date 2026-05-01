@@ -113,3 +113,8 @@ src/
   lib/supabase.ts        — Supabase クライアント
   types/database.ts      — DB テーブルの TypeScript 型定義
 ```
+
+## デプロイ情報
+
+- 本番URL：https://プロジェクト名.vercel.app
+- Supabaseプロジェクト名：speedkadai-obs1
