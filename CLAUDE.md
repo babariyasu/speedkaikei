@@ -116,5 +116,5 @@ src/
 
 ## デプロイ情報
 
-- 本番URL：https://プロジェクト名.vercel.app
-- Supabaseプロジェクト名：speedkadai-obs1
+- 本番URL：https://speed-obs1.vercel.app
+- Supabaseプロジェクト名：speedkadai
